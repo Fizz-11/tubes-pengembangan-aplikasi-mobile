@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'regist_member.dart';
+import 'beranda_member.dart'; // <-- 1. Tambahkan import beranda_member.dart
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       title: 'GYMKU',
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFF00BFA5),
-      ), // Latar belakang hijau tosca penuh sesuai gambar
+      ),
       home: const LoginPage(),
     );
   }
@@ -30,7 +30,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  bool _obscurePassword = true; // Untuk mengaturvisibility password
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,6 @@ class _LoginPageState extends State<LoginPage> {
               width: double.infinity,
               child: Stack(
                 children: [
-                  // Bagian Atas (Logo dan Teks GYMKU di atas latar hijau)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -83,8 +82,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-
-                  // Bagian Bawah (Kotak Putih Lengkung Berisi Form Login)
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
@@ -100,7 +97,6 @@ class _LoginPageState extends State<LoginPage> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Judul Welcome Back
                           const Text(
                             'Welcome back',
                             style: TextStyle(
@@ -120,8 +116,6 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
-
-                          // Textfield Email (Sesuai permintaan diganti dari Nama)
                           TextField(
                             decoration: InputDecoration(
                               hintText: 'Email',
@@ -139,8 +133,6 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-
-                          // Textfield Password dengan Ikon Mata
                           TextField(
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
@@ -172,8 +164,6 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-
-                          // Teks Lupa Password
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
@@ -195,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Tombol Masuk (Hitam)
+                          // Tombol Masuk yang sudah dihubungkan ke BerandaScreen
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -206,7 +196,18 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              onPressed: () {},
+                              onPressed: () {
+                                // 2. Tentukan ID user yang login (misal: ID 1 untuk Budi Santoso)
+                                int loggedInUserId = 1;
+
+                                // 3. Pindah ke BerandaScreen sambil membawa parameter userId
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BerandaScreen(userId: loggedInUserId),
+                                  ),
+                                );
+                              },
                               child: const Text(
                                 'Masuk',
                                 style: TextStyle(
@@ -218,8 +219,6 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Opsi Belum Punya Akun / Daftar Sekarang
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

@@ -1,55 +1,186 @@
 import 'package:flutter/material.dart';
+import 'package:gymku/services/membership_service.dart';
 
 class BerandaScreen extends StatefulWidget {
-  const BerandaScreen({super.key});
+  final int userId;
+
+  const BerandaScreen({super.key, required this.userId});
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
 }
 
 class _BerandaScreenState extends State<BerandaScreen> {
-  // Flag toggle sementara untuk testing kondisi UI (diubah saat konek PostgreSQL nanti)
-  bool hasMembership = true; 
+  // Indeks untuk Bottom Navigation Bar
+  int _currentIndex = 0;
+
+  bool isLoading = true;
+  bool hasMembership = false;
+  String userName = "User";
+  String membershipStatus = "-";
+  String createdAt = "-";
+
+  @override
+  void initState() {
+    super.initState();
+    loadMembershipData(widget.userId);
+  }
+
+  Future<void> loadMembershipData(int id) async {
+    final result = await MembershipService.checkMembership(id);
+
+    if (result != null && result['success'] == true) {
+      setState(() {
+        hasMembership = result['hasMembership'] ?? false;
+        userName = result['data']['name'] ?? 'User';
+        membershipStatus = result['data']['status'] ?? '-';
+        createdAt = result['data']['created_at'] ?? '-';
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        hasMembership = false;
+        userName = "Tamu";
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Daftar halaman yang bisa dipanggil berdasarkan menu bawah
+    final List<Widget> pages = [
+      _buildHomeBody(), // Halaman Beranda Utama Anda
+      _buildPlaceholderPage('Jadwal & Booking Kelas'), // Menu 2
+      _buildPlaceholderPage('Riwayat Aktivitas & Streak'), // Menu 3
+      _buildProfilePage(), // Menu 4 (Profil)
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xffFAFAFA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header Profil & Notifikasi
-              _buildHeader(),
-              const SizedBox(height: 20),
-
-              // 2. Banner Membership (Kondisional: Aktif vs Belum Aktif)
-              hasMembership ? _buildActiveMembershipCard() : _buildNoMembershipCard(),
-              const SizedBox(height: 24),
-
-              // 3. Konten Berdasarkan Kondisi Membership
-              if (hasMembership) ...[
-                _buildQuickMenu(),
-                const SizedBox(height: 24),
-                _buildWeeklyStreak(),
-                const SizedBox(height: 24),
-                _buildTodayClasses(),
-              ] else ...[
-                _buildPopularPackages(),
-                const SizedBox(height: 24),
-                _buildGymSteps(),
-              ],
-            ],
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0F8A7C)),
+            )
+          : pages[_currentIndex], // Menampilkan halaman sesuai tab yang dipilih
+      // --- BOTTOM NAVIGATION BAR ---
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF0F8A7C), // Warna aktif (Tosca)
+        unselectedItemColor: Colors.grey,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Beranda',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month_rounded),
+            label: 'Jadwal',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_fire_department_rounded),
+            label: 'Aktivitas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profil',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- KONTEN HALAMAN BERANDA UTAMA ANDA ---
+  Widget _buildHomeBody() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 20),
+            hasMembership
+                ? _buildActiveMembershipCard()
+                : _buildNoMembershipCard(),
+            const SizedBox(height: 24),
+            if (hasMembership) ...[
+              _buildQuickMenu(),
+              const SizedBox(height: 24),
+              _buildWeeklyStreak(),
+              const SizedBox(height: 24),
+              _buildTodayClasses(),
+            ] else ...[
+              _buildPopularPackages(),
+              const SizedBox(height: 24),
+              _buildGymSteps(),
+            ],
+          ],
         ),
       ),
     );
   }
 
-  // --- HEADER USER ---
+  // --- HALAMAN SEMENTARA UNTUK MENU LAIN ---
+  Widget _buildPlaceholderPage(String title) {
+    return Center(
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
+        ),
+      ),
+    );
+  }
+
+  // --- HALAMAN PROFIL SEDERHANA ---
+  Widget _buildProfilePage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircleAvatar(
+            radius: 40,
+            backgroundColor: Color(0xFF0F1A2C),
+            child: Icon(Icons.person, size: 40, color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            userName,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Status: ${membershipStatus.toUpperCase()}',
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // (Widget pendukung lainnya tetap sama seperti sebelumnya: _buildHeader, _buildActiveMembershipCard, dll.)
   Widget _buildHeader() {
+    String initials = userName.isNotEmpty
+        ? userName
+              .trim()
+              .split(' ')
+              .map((e) => e[0])
+              .take(2)
+              .join()
+              .toUpperCase()
+        : 'NB';
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -58,19 +189,30 @@ class _BerandaScreenState extends State<BerandaScreen> {
             CircleAvatar(
               radius: 26,
               backgroundColor: const Color(0xFF0F1A2C),
-              child: const Text(
-                'NB',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('selamat pagi', style: TextStyle(color: Colors.grey, fontSize: 13)),
+              children: [
+                const Text(
+                  'selamat pagi',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
                 Text(
-                  'Naufal Badu',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F1A2C)),
+                  userName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F1A2C),
+                  ),
                 ),
               ],
             ),
@@ -91,13 +233,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- CARD: MEMBER AKTIF (KIRI) ---
   Widget _buildActiveMembershipCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F8A7C), // Warna Hijau Tosca
+        color: const Color(0xFF0F8A7C),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -106,18 +247,26 @@ class _BerandaScreenState extends State<BerandaScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFD4E157), // Warna Kuning Lemon
+              color: const Color(0xFFD4E157),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'PREMIUM',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87),
+            child: Text(
+              membershipStatus.toUpperCase(),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: Colors.black87,
+              ),
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Naufal Badu',
-            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+          Text(
+            userName,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const Text(
             'GYM-002145',
@@ -126,7 +275,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
+            child: const LinearProgressIndicator(
               value: 0.6,
               backgroundColor: Colors.white24,
               color: Colors.white,
@@ -137,18 +286,38 @@ class _BerandaScreenState extends State<BerandaScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text('Sisa masa aktif', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text('142 hari +', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                children: [
+                  Text(
+                    'Status Akun',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  Text(
+                    'Terverifikasi',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: const [
-                  Text('Berlaku s.d.', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text('5 Jan 2027', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                children: [
+                  const Text(
+                    'Bergabung Sejak',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  Text(
+                    createdAt.split(' ').first,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -158,13 +327,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- CARD: BELUM MEMBER (KANAN) ---
   Widget _buildNoMembershipCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1A2C), // Dark Navy/Hitam
+        color: const Color(0xFF0F1A2C),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -178,13 +346,22 @@ class _BerandaScreenState extends State<BerandaScreen> {
             ),
             child: const Text(
               'PREMIUM',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 12),
           const Text(
             'Kamu belum punya\nmembership',
-            style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, height: 1.2),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -198,11 +375,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD4E157),
                 foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onPressed: () {},
-              child: const Text('Beli Membership', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              child: const Text(
+                'Beli Membership',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
           ),
         ],
@@ -210,7 +392,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- QUICK MENU (RIWAYAT, BOOKING, BEKUKAN, BELI PAKET) ---
   Widget _buildQuickMenu() {
     final menus = [
       {'icon': Icons.calendar_today_outlined, 'title': 'Riwayat\nKunjungan'},
@@ -229,15 +410,28 @@ class _BerandaScreenState extends State<BerandaScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                  ),
+                ],
               ),
-              child: Icon(m['icon'] as IconData, size: 28, color: const Color(0xFF0F1A2C)),
+              child: Icon(
+                m['icon'] as IconData,
+                size: 28,
+                color: const Color(0xFF0F1A2C),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               m['title'] as String,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black87),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
             ),
           ],
         );
@@ -245,12 +439,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- STREAK MINGGUAN ---
   Widget _buildWeeklyStreak() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Streak Mingguan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text(
+          'Streak Mingguan',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -266,20 +462,35 @@ class _BerandaScreenState extends State<BerandaScreen> {
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0F1A2C),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                     ),
                     onPressed: () {},
-                    icon: const Icon(Icons.center_focus_weak, size: 16, color: Colors.white),
-                    label: const Text('Atur Target', style: TextStyle(fontSize: 12, color: Colors.white)),
+                    icon: const Icon(
+                      Icons.center_focus_weak,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                    label: const Text(
+                      'Atur Target',
+                      style: TextStyle(fontSize: 12, color: Colors.white),
+                    ),
                   ),
-                  const Text('Target 4x/minggu', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  const Text(
+                    'Target 4x/minggu',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: const [
+                children: [
                   _StreakDay(day: 'Sen', checked: true),
                   _StreakDay(day: 'Sel', checked: false),
                   _StreakDay(day: 'Rab', checked: false),
@@ -288,7 +499,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
                   _StreakDay(day: 'Sab', checked: false, isFailed: true),
                   _StreakDay(day: 'Min', checked: true),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -296,20 +507,37 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- KELAS HARI INI ---
   Widget _buildTodayClasses() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Kelas Hari Ini', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text(
+          'Kelas Hari Ini',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _buildClassCard('17:00', 'Yoga Flow', 'Studio A . Coach Rina', '8 slot tersisa', const Color(0xFF0F1A2C), Colors.white),
+              _buildClassCard(
+                '17:00',
+                'Yoga Flow',
+                'Studio A . Coach Rina',
+                '8 slot tersisa',
+                const Color(0xFF0F1A2C),
+                Colors.white,
+              ),
               const SizedBox(width: 12),
-              _buildClassCard('19:00', 'HIIT Burn', 'Studio B . Coach Dimas', '5 slot tersisa', Colors.white, Colors.black, isBordered: true),
+              _buildClassCard(
+                '19:00',
+                'HIIT Burn',
+                'Studio B . Coach Dimas',
+                '5 slot tersisa',
+                Colors.white,
+                Colors.black,
+                isBordered: true,
+              ),
             ],
           ),
         ),
@@ -317,7 +545,15 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  Widget _buildClassCard(String time, String title, String subtitle, String slot, Color bg, Color textCol, {bool isBordered = false}) {
+  Widget _buildClassCard(
+    String time,
+    String title,
+    String subtitle,
+    String slot,
+    Color bg,
+    Color textCol, {
+    bool isBordered = false,
+  }) {
     return Container(
       width: 220,
       padding: const EdgeInsets.all(16),
@@ -335,25 +571,52 @@ class _BerandaScreenState extends State<BerandaScreen> {
               color: isBordered ? const Color(0xFFB2EBF2) : Colors.white24,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(time, style: TextStyle(color: isBordered ? Colors.teal : Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(
+              time,
+              style: TextStyle(
+                color: isBordered ? Colors.teal : Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 12),
-          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textCol)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textCol,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(subtitle, style: TextStyle(fontSize: 12, color: isBordered ? Colors.grey : Colors.white70)),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 12,
+              color: isBordered ? Colors.grey : Colors.white70,
+            ),
+          ),
           const SizedBox(height: 12),
-          Text(slot, style: TextStyle(fontSize: 12, color: isBordered ? Colors.grey.shade700 : Colors.white60)),
+          Text(
+            slot,
+            style: TextStyle(
+              fontSize: 12,
+              color: isBordered ? Colors.grey.shade700 : Colors.white60,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // --- KONTEN JIKA BELUM MEMBER ---
   Widget _buildPopularPackages() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Paket Populer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text(
+          'Paket Populer',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -383,10 +646,23 @@ class _BerandaScreenState extends State<BerandaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          Text(duration, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            duration,
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
           const SizedBox(height: 12),
-          Text(price, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F8A7C))),
+          Text(
+            price,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F8A7C),
+            ),
+          ),
         ],
       ),
     );
@@ -396,11 +672,26 @@ class _BerandaScreenState extends State<BerandaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Cara masuk gym', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text(
+          'Cara masuk gym',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
-        _buildStepItem('1', 'Beli membership', 'Pilih paket dan bayar lewat aplikasi'),
-        _buildStepItem('2', 'Daftarkan wajah', 'Foto sekali, lalu hanya perlu datang'),
-        _buildStepItem('3', 'Dipindai petugas', 'Petugas memindai wajahmu di pintu masuk'),
+        _buildStepItem(
+          '1',
+          'Beli membership',
+          'Pilih paket dan bayar lewat aplikasi',
+        ),
+        _buildStepItem(
+          '2',
+          'Daftarkan wajah',
+          'Foto sekali, lalu hanya perlu datang',
+        ),
+        _buildStepItem(
+          '3',
+          'Dipindai petugas',
+          'Petugas memindai wajahmu di pintu masuk',
+        ),
       ],
     );
   }
@@ -413,14 +704,29 @@ class _BerandaScreenState extends State<BerandaScreen> {
           CircleAvatar(
             radius: 18,
             backgroundColor: const Color(0xFF00BFA5),
-            child: Text(num, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(
+              num,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              Text(desc, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                desc,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
         ],
@@ -434,7 +740,11 @@ class _StreakDay extends StatelessWidget {
   final bool checked;
   final bool isFailed;
 
-  const _StreakDay({required this.day, this.checked = false, this.isFailed = false});
+  const _StreakDay({
+    required this.day,
+    this.checked = false,
+    this.isFailed = false,
+  });
 
   @override
   Widget build(BuildContext context) {
