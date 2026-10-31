@@ -168,11 +168,18 @@ class _MyHomePageState extends State<MyHomePage>
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const LoginPage(), // Sesuaikan dengan nama class widget di file login_member.dart Anda
+                                    PageRouteBuilder(
+                                      pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
+                                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                        // Efek transisi Fade yang lembut
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        );
+                                      },
+                                      transitionDuration: const Duration(milliseconds: 250), // Atur kecepatan transisi
                                     ),
                                   );
-
                                 },
                                 child: const Text(
                                   'Login',
