@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gymku/services/membership_service.dart';
 
+import 'package:gymku/beliMember/pilih_paket_page.dart';
+
 class BerandaScreen extends StatefulWidget {
   final int userId;
 
@@ -380,7 +382,22 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const PilihPaketPage(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      // Menggunakan efek Fade (memudar perlahan yang sangat halus)
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                    transitionDuration: const Duration(milliseconds: 250), // Kecepatan transisi
+                  ),
+                );
+              },
               child: const Text(
                 'Beli Membership',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -412,7 +429,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                   ),
                 ],
