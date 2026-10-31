@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'regist_member.dart';
-import 'beranda_member.dart'; // <-- 1. Tambahkan import beranda_member.dart
+import 'beranda_member.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +32,60 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
+
+  // 1. Tambahkan Controller untuk mengambil teks dari TextField
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Fungsi untuk memproses validasi login
+  void _handleLogin() {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    // Validasi kosong
+    if (email.isEmpty || password.isEmpty) {
+      _showErrorDialog('Email dan Password tidak boleh kosong!');
+      return;
+    }
+
+    // --- CONTOH VALIDASI DATA (Bisa disesuaikan dengan database/API Anda) ---
+    // Contoh akun yang terdaftar
+    const String validEmail = 'user@gymku.com';
+    const String validPassword = '123456';
+    int loggedInUserId = 1;
+
+    if (email == validEmail && password == validPassword) {
+      // Jika benar, masuk ke Beranda Member
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BerandaScreen(userId: loggedInUserId),
+        ),
+      );
+    } else {
+      // Jika salah atau tidak terdaftar, tampilkan pesan error
+      _showErrorDialog('Email atau password salah / tidak terdaftar!');
+    }
+  }
+
+  // Fungsi helper untuk menampilkan pesan error (SnackBar)
+  void _showErrorDialog(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    // Bersihkan controller saat widget dihancurkan
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +171,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
+                          
+                          // TextField Email dengan Controller
                           TextField(
+                            controller: _emailController,
                             decoration: InputDecoration(
                               hintText: 'Email',
                               hintStyle: const TextStyle(color: Colors.grey),
@@ -133,7 +191,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 16),
+                          
+                          // TextField Password dengan Controller
                           TextField(
+                            controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               hintText: 'Password',
@@ -184,8 +245,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
-
-                          // Tombol Masuk yang sudah dihubungkan ke BerandaScreen
+                          // Tombol Masuk yang memicu fungsi _handleLogin
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -196,18 +256,7 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              onPressed: () {
-                                // 2. Tentukan ID user yang login (misal: ID 1 untuk Budi Santoso)
-                                int loggedInUserId = 1;
-
-                                // 3. Pindah ke BerandaScreen sambil membawa parameter userId
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BerandaScreen(userId: loggedInUserId),
-                                  ),
-                                );
-                              },
+                              onPressed: _handleLogin, // Memanggil fungsi validasi
                               child: const Text(
                                 'Masuk',
                                 style: TextStyle(
