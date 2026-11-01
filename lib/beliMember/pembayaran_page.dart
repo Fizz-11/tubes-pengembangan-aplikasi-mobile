@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gymku/beliMember/qris_payment_page.dart';
 
 class PembayaranPage extends StatefulWidget {
   final String packageName; // Contoh: "Premium 3 Bulan"
@@ -285,9 +286,23 @@ class _PembayaranPageState extends State<PembayaranPage> {
                         shadowColor: const Color(0xFF00A896).withOpacity(0.4),
                       ),
                       onPressed: () {
-                        print(
-                          "Memproses pembayaran metode: $selectedPaymentMethod sejumlah ${widget.price}",
-                        );
+                      // Pindah ke halaman Konfirmasi Pembayaran dengan transisi Fade yang mulus
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) =>  QrisPaymentPage(
+                            packageName:widget.packageName, // Sesuaikan data paketnya
+                            price: widget.price,           // Sesuaikan harganya
+                          ),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                          transitionDuration: const Duration(milliseconds: 250),
+                        ),
+                      );
                       },
                       child: Text(
                         'Bayar ${widget.price}',
