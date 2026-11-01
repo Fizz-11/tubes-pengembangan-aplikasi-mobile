@@ -56,7 +56,7 @@ class _PembayaranPageState extends State<PembayaranPage> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -116,7 +116,7 @@ class _PembayaranPageState extends State<PembayaranPage> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -225,7 +225,7 @@ class _PembayaranPageState extends State<PembayaranPage> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -283,7 +283,7 @@ class _PembayaranPageState extends State<PembayaranPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: _isButtonHovered ? 6 : 3,
-                        shadowColor: const Color(0xFF00A896).withOpacity(0.4),
+                        shadowColor: const Color(0xFF00A896).withValues(alpha: 0.15),
                       ),
                       onPressed: () {
                       // Pindah ke halaman Konfirmasi Pembayaran dengan transisi Fade yang mulus
