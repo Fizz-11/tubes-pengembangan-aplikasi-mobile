@@ -3,6 +3,7 @@ import 'package:gymku/services/membership_service.dart';
 
 import 'package:gymku/beliMember/pilih_paket_page.dart';
 
+
 class BerandaScreen extends StatefulWidget {
   final int userId;
 
@@ -85,7 +86,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month_rounded),
-            label: 'Jadwal',
+            label: 'Kelas',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.local_fire_department_rounded),
