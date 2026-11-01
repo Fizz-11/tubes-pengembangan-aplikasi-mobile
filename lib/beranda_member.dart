@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:gymku/services/membership_service.dart';
-
 import 'package:gymku/beliMember/pilih_paket_page.dart';
-
+import 'package:gymku/profile_page.dart';
 
 class BerandaScreen extends StatefulWidget {
   final int userId;
+  final bool forceMember; // Parameter sementara untuk simulasi tanpa database
 
-  const BerandaScreen({super.key, required this.userId});
+  const BerandaScreen({
+    super.key,
+    required this.userId,
+    this.forceMember = false,
+  });
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
 }
 
 class _BerandaScreenState extends State<BerandaScreen> {
-  // Indeks untuk Bottom Navigation Bar
   int _currentIndex = 0;
 
   bool isLoading = true;
@@ -26,7 +29,22 @@ class _BerandaScreenState extends State<BerandaScreen> {
   @override
   void initState() {
     super.initState();
-    loadMembershipData(widget.userId);
+
+    // --- SIMULASI SEMENTARA (TIDAK PERLU MENUNGGU DATABASE) ---
+    // Jika dibuka dengan forceMember = true (misal dari halaman scan wajah),
+    // maka langsung paksa ubah status jadi member aktif (Premium).
+    if (widget.forceMember) {
+      setState(() {
+        hasMembership = true;
+        userName = "Naufal Badu";
+        membershipStatus = "Premium";
+        createdAt = "2026-06-01";
+        isLoading = false;
+      });
+    } else {
+      // Jika dibuka normal, jalankan fungsi cek database asli
+      loadMembershipData(widget.userId);
+    }
   }
 
   Future<void> loadMembershipData(int id) async {
@@ -44,6 +62,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
       setState(() {
         hasMembership = false;
         userName = "Tamu";
+        membershipStatus = "-";
         isLoading = false;
       });
     }
@@ -51,12 +70,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Daftar halaman yang bisa dipanggil berdasarkan menu bawah
     final List<Widget> pages = [
-      _buildHomeBody(), // Halaman Beranda Utama Anda
-      _buildPlaceholderPage('Jadwal & Booking Kelas'), // Menu 2
-      _buildPlaceholderPage('Riwayat Aktivitas & Streak'), // Menu 3
-      _buildProfilePage(), // Menu 4 (Profil)
+      _buildHomeBody(),
+      _buildPlaceholderPage('Jadwal & Booking Kelas'),
+      _buildPlaceholderPage('Riwayat Aktivitas & Streak'),
+      ProfilePage(userName: userName, membershipStatus: membershipStatus),
     ];
 
     return Scaffold(
@@ -65,8 +83,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF0F8A7C)),
             )
-          : pages[_currentIndex], // Menampilkan halaman sesuai tab yang dipilih
-      // --- BOTTOM NAVIGATION BAR ---
+          : pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -75,7 +92,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF0F8A7C), // Warna aktif (Tosca)
+        selectedItemColor: const Color(0xFF0F8A7C),
         unselectedItemColor: Colors.grey,
         selectedFontSize: 12,
         unselectedFontSize: 12,
@@ -101,7 +118,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- KONTEN HALAMAN BERANDA UTAMA ANDA ---
+  // --- KONTEN HALAMAN BERANDA UTAMA ---
   Widget _buildHomeBody() {
     return SafeArea(
       child: SingleChildScrollView(
@@ -111,12 +128,13 @@ class _BerandaScreenState extends State<BerandaScreen> {
           children: [
             _buildHeader(),
             const SizedBox(height: 20),
+            // Kartu Kondisional (Berubah otomatis berdasarkan status membership)
             hasMembership
                 ? _buildActiveMembershipCard()
                 : _buildNoMembershipCard(),
             const SizedBox(height: 24),
             if (hasMembership) ...[
-              _buildQuickMenu(),
+              _buildQuickMenuMember(),
               const SizedBox(height: 24),
               _buildWeeklyStreak(),
               const SizedBox(height: 24),
@@ -132,7 +150,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- HALAMAN SEMENTARA UNTUK MENU LAIN ---
   Widget _buildPlaceholderPage(String title) {
     return Center(
       child: Text(
@@ -146,33 +163,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // --- HALAMAN PROFIL SEDERHANA ---
-  Widget _buildProfilePage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircleAvatar(
-            radius: 40,
-            backgroundColor: Color(0xFF0F1A2C),
-            child: Icon(Icons.person, size: 40, color: Colors.white),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            userName,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Status: ${membershipStatus.toUpperCase()}',
-            style: const TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // (Widget pendukung lainnya tetap sama seperti sebelumnya: _buildHeader, _buildActiveMembershipCard, dll.)
   Widget _buildHeader() {
     String initials = userName.isNotEmpty
         ? userName
@@ -205,13 +195,17 @@ class _BerandaScreenState extends State<BerandaScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'selamat pagi',
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                Row(
+                  children: const [
+                    Text(
+                      'selamat pagi ',
+                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ],
                 ),
-                Text(
-                  userName,
-                  style: const TextStyle(
+                const Text(
+                  'User', // Ganti dengan variabel userName jika dinamis
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F1A2C),
@@ -236,29 +230,42 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
+  // --- KARTU KETIKA SUDAH MEMBER (PREMIUM) ---
   Widget _buildActiveMembershipCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F8A7C),
-        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF00A896), Color(0xFF028090)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00A896).withValues(alpha: 0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFD4E157),
+              color: const Color(0xFFF4FF81),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               membershipStatus.toUpperCase(),
               style: const TextStyle(
+                color: Color(0xFF0F1B2B),
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Colors.black87,
+                fontSize: 11,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -267,57 +274,67 @@ class _BerandaScreenState extends State<BerandaScreen> {
             userName,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 2),
           const Text(
             'GYM-002145',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
           ),
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: const LinearProgressIndicator(
-              value: 0.6,
-              backgroundColor: Colors.white24,
-              color: Colors.white,
-              minHeight: 8,
+            child: LinearProgressIndicator(
+              value: 0.75,
+              backgroundColor: Colors.white.withValues(alpha: 0.15),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              minHeight: 6,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Text(
-                    'Status Akun',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                  Text(
-                    'Terverifikasi',
+                  const Text(
+                    'Sisa masa aktif\n142 hari',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 14),
                   ),
                 ],
               ),
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    'Bergabung Sejak',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  Text(
+                    'Berlaku s.d.',
+                    style: TextStyle(color: Colors.white70, fontSize: 11),
                   ),
                   Text(
-                    createdAt.split(' ').first,
-                    style: const TextStyle(
+                    '5 Jan 2027',
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -330,6 +347,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
+  // --- KARTU KETIKA BELUM MEMBER ---
   Widget _buildNoMembershipCard() {
     return Container(
       width: double.infinity,
@@ -344,16 +362,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF00BFA5),
+              color: const Color(0xFFFBB03B),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
-              'PREMIUM',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Colors.white,
-              ),
+              'Tidak Aktif',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
           const SizedBox(height: 12),
@@ -387,15 +401,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 Navigator.push(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => const PilihPaketPage(),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      // Menggunakan efek Fade (memudar perlahan yang sangat halus)
-                      return FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      );
-                    },
-                    transitionDuration: const Duration(milliseconds: 250), // Kecepatan transisi
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const PilihPaketPage(),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                    transitionDuration: const Duration(milliseconds: 250),
                   ),
                 );
               },
@@ -410,45 +425,50 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  Widget _buildQuickMenu() {
+  // --- MENU PINTASAN KETIKA SUDAH MEMBER (5 MENU) ---
+  Widget _buildQuickMenuMember() {
     final menus = [
-      {'icon': Icons.calendar_today_outlined, 'title': 'Riwayat\nKunjungan'},
-      {'icon': Icons.assignment_outlined, 'title': 'Booking\nKelas'},
-      {'icon': Icons.phonelink_erase_outlined, 'title': 'Bekukan\nMember'},
-      {'icon': Icons.receipt_long_outlined, 'title': 'Beli\nPaket'},
+      {'icon': Icons.event_available_rounded, 'title': 'Riwayat\nCheck-in'},
+      {'icon': Icons.edit_calendar_rounded, 'title': 'Booking\nKelas'},
+      {'icon': Icons.card_membership_rounded, 'title': 'Beli\nPaket'},
+      {'icon': Icons.support_agent_rounded, 'title': 'Customer\nService'},
+      {'icon': Icons.pause_circle_outline_rounded, 'title': 'Bekukan\nMember'},
     ];
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: menus.map((m) {
         return Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade200),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Icon(
                 m['icon'] as IconData,
-                size: 28,
-                color: const Color(0xFF0F1A2C),
+                size: 22,
+                color: const Color(0xFF0F1B2B),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               m['title'] as String,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 11,
+                color: Color(0xFF0F1B2B),
                 fontWeight: FontWeight.w500,
-                color: Colors.black87,
+                height: 1.2,
               ),
             ),
           ],
@@ -471,32 +491,39 @@ class _BerandaScreenState extends State<BerandaScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
           ),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F1A2C),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
                     ),
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.center_focus_weak,
-                      size: 16,
-                      color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F1A2C),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    label: const Text(
-                      'Atur Target',
-                      style: TextStyle(fontSize: 12, color: Colors.white),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.center_focus_weak,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Atur Target',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const Text(
@@ -534,96 +561,123 @@ class _BerandaScreenState extends State<BerandaScreen> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildClassCard(
-                '17:00',
-                'Yoga Flow',
-                'Studio A . Coach Rina',
-                '8 slot tersisa',
-                const Color(0xFF0F1A2C),
-                Colors.white,
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F1A2C),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '17:00',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Yoga Flow',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Studio A . Coach Rina',
+                      style: TextStyle(color: Colors.white60, fontSize: 11),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      '8 slot tersisa',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 12),
-              _buildClassCard(
-                '19:00',
-                'HIIT Burn',
-                'Studio B . Coach Dimas',
-                '5 slot tersisa',
-                Colors.white,
-                Colors.black,
-                isBordered: true,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F7FA),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '19:00',
+                        style: TextStyle(
+                          color: Color(0xFF00838F),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'HIIT Burn',
+                      style: TextStyle(
+                        color: Color(0xFF0F1B2B),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Studio B . Coach Dimas',
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      '5 slot tersisa',
+                      style: TextStyle(
+                        color: Color(0xFF0F1B2B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
-    );
-  }
-
-  Widget _buildClassCard(
-    String time,
-    String title,
-    String subtitle,
-    String slot,
-    Color bg,
-    Color textCol, {
-    bool isBordered = false,
-  }) {
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: isBordered ? Border.all(color: Colors.grey.shade300) : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: isBordered ? const Color(0xFFB2EBF2) : Colors.white24,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              time,
-              style: TextStyle(
-                color: isBordered ? Colors.teal : Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: textCol,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: isBordered ? Colors.grey : Colors.white70,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            slot,
-            style: TextStyle(
-              fontSize: 12,
-              color: isBordered ? Colors.grey.shade700 : Colors.white60,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -771,15 +825,15 @@ class _StreakDay extends StatelessWidget {
 
     if (checked) {
       bg = const Color(0xFF00BFA5);
-      icon = const Icon(Icons.check, color: Colors.white, size: 20);
+      icon = const Icon(Icons.check, color: Colors.white, size: 18);
     } else if (isFailed) {
       bg = const Color(0xFF00BFA5);
-      icon = const Icon(Icons.close, color: Colors.white, size: 20);
+      icon = const Icon(Icons.close, color: Colors.white, size: 18);
     }
 
     return Column(
       children: [
-        CircleAvatar(radius: 18, backgroundColor: bg, child: icon),
+        CircleAvatar(radius: 17, backgroundColor: bg, child: icon),
         const SizedBox(height: 6),
         Text(day, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
