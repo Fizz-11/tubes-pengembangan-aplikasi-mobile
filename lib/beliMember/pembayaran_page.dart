@@ -195,25 +195,39 @@ class _PembayaranPageState extends State<PembayaranPage> {
             const SizedBox(height: 12),
 
             // Opsi Metode Pembayaran (QRIS, Transfer Bank, E-Wallet) dengan Drop Shadow & Efek Pilihan
-            _buildPaymentOption(
-              title: 'QRIS',
-              subtitle: 'Scan dari e-wallet atau m-banking',
-              icon: Icons.qr_code_2_rounded,
-              value: 'QRIS',
-            ),
-            const SizedBox(height: 10),
-            _buildPaymentOption(
-              title: 'Transfer Bank',
-              subtitle: 'Bayar lewat virtual account',
-              icon: Icons.account_balance_outlined,
-              value: 'Transfer Bank',
-            ),
-            const SizedBox(height: 10),
-            _buildPaymentOption(
-              title: 'E-Wallet',
-              subtitle: 'Bayar lewat aplikasi e-wallet',
-              icon: Icons.account_balance_wallet_outlined,
-              value: 'E-Wallet',
+            RadioGroup<String>(
+              groupValue: selectedPaymentMethod,
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    selectedPaymentMethod = value;
+                  });
+                }
+              },
+              child: Column(
+                children: [
+                  _buildPaymentOption(
+                    title: 'QRIS',
+                    subtitle: 'Scan dari e-wallet atau m-banking',
+                    icon: Icons.qr_code_2_rounded,
+                    value: 'QRIS',
+                  ),
+                  const SizedBox(height: 10),
+                  _buildPaymentOption(
+                    title: 'Transfer Bank',
+                    subtitle: 'Bayar lewat virtual account',
+                    icon: Icons.account_balance_outlined,
+                    value: 'Transfer Bank',
+                  ),
+                  const SizedBox(height: 10),
+                  _buildPaymentOption(
+                    title: 'E-Wallet',
+                    subtitle: 'Bayar lewat aplikasi e-wallet',
+                    icon: Icons.account_balance_wallet_outlined,
+                    value: 'E-Wallet',
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
 
