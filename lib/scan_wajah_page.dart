@@ -23,7 +23,6 @@ class _ScanWajahPageState extends State<ScanWajahPage> {
   Future<void> _initCamera() async {
     try {
       final cameras = await availableCameras();
-      // Pilih kamera depan (front camera) jika tersedia untuk scan wajah
       final frontCamera = cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.front,
         orElse: () => cameras.first,
@@ -36,21 +35,20 @@ class _ScanWajahPageState extends State<ScanWajahPage> {
       );
 
       await _controller!.initialize();
-      if (!mounted) return;
+      if (!mounted) return; // Mencegah proses jika widget sudah ditutup
       setState(() {
         _isCameraInitialized = true;
       });
     } catch (e) {
-      debugPrint("Error menginisialisasi kamera: $e");
+      debugPrint("Error kamera: $e");
     }
   }
 
   @override
-  void dispose() {
-    _controller?.dispose();
-    dispose();
-    super.dispose();
-  }
+void dispose() {
+  _controller?.dispose(); // Wajib untuk menghentikan kamera
+  super.dispose();        // Panggil super setelahnya
+}
 
   @override
   Widget build(BuildContext context) {
