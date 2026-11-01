@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'main.dart';
+import 'package:gymku/edit_profile.dart';
+import 'package:gymku/riwayat_checkin.dart';
+import 'package:gymku/ganti_password.dart';
 
 class ProfilePage extends StatelessWidget {
   final String userName;
@@ -122,28 +126,54 @@ class ProfilePage extends StatelessWidget {
                 iconColor: const Color(0xFF00A896),
                 iconBg: const Color(0xFFE0F2F1),
                 title: 'Data Diri',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>  EditProfilePage(
+                        initialName: 'Naufal Badu S.Kom, M.Kom',
+                        initialEmail: 'Naufal@gmail.com',
+                        initialPhone: '+62 831-7079-6020',
+                      ),
+                    ),
+                  );
+                },
               ),
               _buildProfileMenuItem(
                 icon: Icons.credit_card_rounded,
                 iconColor: const Color(0xFF00A896),
                 iconBg: const Color(0xFFE0F2F1),
                 title: 'Riwayat Pembayaran',
-                onTap: () {},
+                onTap: () {
+                },
               ),
               _buildProfileMenuItem(
                 icon: Icons.history_rounded,
                 iconColor: const Color(0xFF00A896),
                 iconBg: const Color(0xFFE0F2F1),
                 title: 'Riwayat Check-in',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RiwayatCheckinPage(),
+                    ),
+                  );
+                },
               ),
               _buildProfileMenuItem(
                 icon: Icons.lock_outline_rounded,
                 iconColor: const Color(0xFF00A896),
                 iconBg: const Color(0xFFE0F2F1),
                 title: 'Ganti Password',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GantiPasswordPage(),
+                    ),
+                  );
+                },
               ),
               _buildProfileMenuItem(
                 icon: Icons.logout_rounded,
@@ -151,7 +181,33 @@ class ProfilePage extends StatelessWidget {
                 iconBg: const Color(0xFFFFEBEE),
                 title: 'Keluar Akun',
                 textColor: Colors.redAccent,
-                onTap: () {},
+                onTap: () {
+                  // Menggunakan pushAndRemoveUntil agar semua riwayat halaman terhapus total
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const MyHomePage(title: 'GYMKU'),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        const begin = Offset(1.0, 0.0);
+                        const end = Offset.zero;
+                        const curve = Curves.easeInOutCubic;
+
+                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                        var offsetAnimation = animation.drive(tween);
+
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      transitionDuration: const Duration(milliseconds: 300),
+                    ),
+                    (route) => false, // Menghapus seluruh halaman sebelumnya (profil, beranda, dll)
+                  );
+                },
               ),
             ],
           ),
@@ -205,7 +261,7 @@ class ProfilePage extends StatelessWidget {
   }
 
   // Widget Helper untuk Item Menu List
-  Widget _buildProfileMenuItem({
+Widget _buildProfileMenuItem({
     required IconData icon,
     required Color iconColor,
     required Color iconBg,
@@ -216,30 +272,36 @@ class ProfilePage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: iconBg,
-            shape: BoxShape.circle,
+      child: Material( // <-- Pastikan widget Material ada di sini!
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(icon, color: iconColor, size: 20),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: textColor,
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconBg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+          onTap: onTap,
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
-        onTap: onTap,
       ),
     );
   }
