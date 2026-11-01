@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-// import '../beranda_member.dart';
+import '../beranda_member.dart';
 
 class ScanWajahPage extends StatefulWidget {
   const ScanWajahPage({super.key});
@@ -23,8 +23,10 @@ class _ScanWajahPageState extends State<ScanWajahPage> {
   Future<void> _initCamera() async {
     try {
       final cameras = await availableCameras();
+      //Pilih Indeks Kamera Secara Spesifik:Sesuaikan kode pemilihan kamera di Flutter.Jika di kode Anda menggunakan cameras[0], ubah kodenya agar bisa mendeteksi daftar kamera yang tersedia atau pilih indeks lain jika Iriun terbaca di indeks ke-1 atau berikutnya:Dartfinal cameras = await availableCameras();
+      // Gunakan loop atau pastikan memilih indeks yang tepat untuk Iriun Webcam
       final frontCamera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.front,
+        (c) => c.lensDirection == CameraLensDirection.external,
         orElse: () => cameras.first,
       );
 
@@ -81,9 +83,9 @@ void dispose() {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF4FF81).withOpacity(0.4),
+                color: const Color(0xFFF4FF81).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD4E157).withOpacity(0.5)),
+                border: Border.all(color: const Color(0xFFD4E157).withValues(alpha: 0.15)),
               ),
               child: Row(
                 children: [
@@ -175,11 +177,22 @@ void dispose() {
                   elevation: 2,
                 ),
                 onPressed: () async {
-                  // Simulasi aksi ambil foto / scan ulang
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Memindai ulang wajah... Berhasil!')),
-                  );
-                },
+                    // Navigasi langsung ke Beranda dengan membawa status member aktif (Simulasi)
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const BerandaScreen(
+                          userId: 1, 
+                          forceMember: true, // Memaksa tampilan berubah menjadi member aktif (Premium)
+                        ),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 250),
+                      ),
+                      (route) => false, // Menghapus riwayat halaman sebelumnya agar tidak bisa kembali ke halaman scan/pembayaran
+                    );
+                  },
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
