@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gymku/services/membership_service.dart';
 import 'package:gymku/beliMember/pilih_paket_page.dart';
 import 'package:gymku/profile_page.dart';
+import 'package:gymku/perpanjang_member.dart';
+import 'package:gymku/booking_kelas.dart';
 
 class BerandaScreen extends StatefulWidget {
   final int userId;
@@ -72,8 +74,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildHomeBody(),
-      _buildPlaceholderPage('Jadwal & Booking Kelas'),
-      _buildPlaceholderPage('Riwayat Aktivitas & Streak'),
+      const BookingKelasPage(),
+      const PaketMembershipPage(),
       ProfilePage(userName: userName, membershipStatus: membershipStatus),
     ];
 
@@ -106,8 +108,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
             label: 'Kelas',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_fire_department_rounded),
-            label: 'Aktivitas',
+            icon: Icon(Icons.view_agenda_outlined),
+            label: 'Paket',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),
@@ -145,19 +147,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
               _buildGymSteps(),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderPage(String title) {
-    return Center(
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey,
         ),
       ),
     );
