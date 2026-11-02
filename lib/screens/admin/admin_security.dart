@@ -38,9 +38,14 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l, style: AppText.body(11, color: AppColors.muted)),
+          Text(
+            l,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.body(11, color: AppColors.muted),
+          ),
           const SizedBox(height: 4),
-          Text(v, style: AppText.heading(22, color: c)),
+          Text(v, style: AppText.heading(20, color: c)),
         ],
       ),
     );

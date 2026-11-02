@@ -570,33 +570,38 @@ class AdminLogsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final logs = context.watch<AppState>().logs;
-    return Column(
-      children: [
-        const AdminHeader(
-          'Log Aktivitas',
-          subtitle: 'Semua tindakan admin dan sistem',
-          showBack: true,
-        ),
-        Expanded(
-          child: logs.isEmpty
-              ? Center(
-                  child: Text(
-                    'Belum ada aktivitas',
-                    style: AppText.body(13, color: AppColors.muted),
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                  children: [
-                    AppCard(
-                      child: Column(
-                        children: [for (final e in logs) LogRow(e)],
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const AdminHeader(
+              'Log Aktivitas',
+              subtitle: 'Semua tindakan admin dan sistem',
+              showBack: true,
+            ),
+            Expanded(
+              child: logs.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Belum ada aktivitas',
+                        style: AppText.body(13, color: AppColors.muted),
                       ),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                      children: [
+                        AppCard(
+                          child: Column(
+                            children: [for (final e in logs) LogRow(e)],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
